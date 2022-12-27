@@ -1,0 +1,1 @@
+Put the qcow2 Fedora CoreOS image in this folder.

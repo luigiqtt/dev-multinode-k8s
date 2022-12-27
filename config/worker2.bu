@@ -1,0 +1,62 @@
+variant: fcos
+version: 1.4.0
+storage:
+  files:
+    # Hostname
+    - path: /etc/hostname
+      mode: 0644
+      contents:
+        inline: k8s-worker2
+    # Fedora CoreOS disables SSH password login by default, enable it.
+    - path: /etc/ssh/sshd_config.d/20-enable-passwords.conf
+      mode: 0644
+      contents:
+        inline: |
+          PasswordAuthentication yes
+    # YUM repository for kubeadm, kubelet and kubectl
+    - path: /etc/yum.repos.d/kubernetes.repo
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          [kubernetes]
+          name=Kubernetes
+          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          enabled=1
+          gpgcheck=0
+          repo_gpgcheck=0
+          gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    # Configure automatic loading of required Kernel modules on startup
+    - path: /etc/modules-load.d/crio-net.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          overlay
+          br_netfilter
+    # Set kernel parameters required by kubelet
+    - path: /etc/sysctl.d/kubernetes.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          net.bridge.bridge-nf-call-iptables=1
+          net.ipv4.ip_forward=1
+    # Worker node initialization script
+    - path: /var/home/admin/setup/init.sh
+      mode: 0755
+      contents:
+        inline: |
+          #!/bin/bash
+          sudo systemctl enable --now crio
+          sudo systemctl enable kubelet
+          echo ">>> Join the cluster using the command provided by the Control Plane node!"
+passwd:
+  users:
+    - name: admin
+      groups:
+        - wheel
+        - sudo
+      password_hash: $y$j9T$qCZaVghIlwZj4rbVBSUvH1$ELNBYOldIEseAGZVxRawjhDrlmAVnfVy8.jrkILIGfA
+      #ssh_authorized_keys:
+      #  - <Your SSH public key>
