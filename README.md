@@ -41,7 +41,7 @@ On the host Linux machine the following software must be installed:
         sudo dnf install -y butane
     ```
 
-When the above software is available, clone the GitHub repository for this project:
+With the above software installed, clone this repository:
 ```bash
 git clone https://github.com/luigiqtt/dev-multinode-k8s.git
 ```
@@ -49,9 +49,10 @@ This will create a folder named ***dev-multinode-k8s*** containing the following
 
 *   **k8s.tf**:  is the Terraform file describing the K8s cluster;
 *   **variables.tf**: contains the declaration of the variables used;
-*   **k8s.auto.tfvars**: contains the values of the variables used to create the cluster (see Configuration chapter below);
-*   **k8s.secret.auto.tfvars**: contains the password that will be used to access the nodes of the cluster via SSH (see Configuration chapter below). Note that this file is included only as an example, but, since it contains potentially sensitive information, it should not be stored in version control systems;
-*   **Butane** (.bu) files in the **config** folder (see **Configuration** chapter below).
+*   **k8s.auto.tfvars**: contains the values of the variables used to create the cluster (see the [*Configuration*](#configuration) chapter);
+*   **k8s.secret.auto.tfvars**: contains the password that will be used to access the nodes of the cluster via SSH (see the [*Configuration*](#configuration) chapter). Note that this file is included only as an example, but, since it contains potentially sensitive information, it should not be stored in version control systems;
+*   **Butane** (.bu) files in the **config** folder (see the [*Configuration*](#configuration) chapter);
+*   **create.sh**: simple example script to execute all the steps required for the creation of the cluster (see the [*Cluster creation*](#cluster-creation) chapter).
 
 Another prerequisite is an extracted *qcow2* image of [**Fedora CoreOS**](https://getfedora.org/en/coreos?stream=stable), that can be downloaded from the [Fedora CoreOS official website](https://getfedora.org/en/coreos/download?tab=metal_virtualized&stream=stable&arch=x86_64). Download the QEMU version and uncompress the .xz file. The uncompressed file must be put in the **images** directory that is present in the cloned repository.
 
@@ -69,7 +70,7 @@ Most of the configuration parameters are containd in the **k8s.auto.tfvars** and
 
 The **k8s.secret.auto.tfvars** contains only the password of the admin user of all the nodes. It is used by Terraform to install the required software on the nodes and **must match** the ***password_hash*** configured in the Butane files of the nodes (see below).
 
-If you want to change the number of worker nodes of the cluster see the chapter **Add/remove worker nodes** below.
+If you want to change the number of worker nodes of the cluster see the [*Add/remove worker nodes*](#addremove-worker-nodes) chapter.
 
 ### Butane files
 The configuration of the virtual machines (nodes of the cluster) that is applied at the first boot is defined using [**Butane**](https://docs.fedoraproject.org/en-US/fedora-coreos/producing-ign/) YAML-formatted files. For each VM there must be a Butane file in the ***config*** directory. Each file will be automatically converted by Terraform into an ***Ignition*** JSON file (.ign).
@@ -85,19 +86,19 @@ The main parameters in the Butane files that can be safely changed before applyi
 * **ssh_authorized_keys** (optional): list of the SSH keys that can be used to access the cluster nodes via SSH. These parameter is optional, but it is advisable to set it in order to speed up the access to the nodes of the cluster (see: https://www.ssh.com/academy/ssh/authorized-key);
 * **podSubnet** (only in the **clusterconfig.yml** file definition present in the **control-plane.bu** file): subnet used by pods. Modify it if another set of IP addresses is desired for the pods.
 
-Of course, you can change also the rest of the files in order, for example, to add other useful files/scripts to the nodes, configure services, modify the initialization scripts, etc., but do this carefully!
+Of course, you can change also the rest of the files in order, for example, to add other useful files/scripts to the nodes, configure services, modify the initialization scripts, etc..
 
 Cluster creation
 ---
 
-To create a new multi-node K8s cluster on your Linux machine proceed as follows:
+To create a new multi-node K8s cluster on your Linux machine the required steps are the following:
 
 1. **Initialize Terraform**:
     ```bash
         cd dev-multinode-k8s
         terraform init
     ```
-2. **Modify the configuration** files if needed (see previous chapter);
+2. **Modify the configuration** files if needed (see the [previous](#configuration) chapter);
 3. **Apply the configuration** with Terraform:
     ```bash
         sudo terraform apply
@@ -145,11 +146,11 @@ To create a new multi-node K8s cluster on your Linux machine proceed as follows:
 kubeadm token create --print-join-command
 ```
 
-**Note 2**: the files on GitHub include a simple example script named ***create.sh*** that executes all the steps described above automatically.
+**Note 2**: the files in the repository include a simple example script named ***create.sh*** that executes all the steps described above automatically (except for the Terraform initialization command).
 
 Add/remove worker nodes
 ---
-To add or remove worker nodes is quite easy and can be done following the procedures described below.
+To add or remove worker nodes is quite easy and can be done following the steps described below.
 
 ### Remove worker nodes
 
@@ -167,7 +168,7 @@ Now you can run the Terraform *apply* command:
 ```bash
 sudo terraform apply
 ```
-When the command execution terminates, follow the same steps described in the chapter **Cluster creation** to initialize and add the new worker nodes. To get the *join command* required to add the new nodes to the cluster, execute the following command on the *Control Plane* node:
+When the command execution terminates, follow the same steps described in the [*Cluster creation*](#cluster-creation) chapter to initialize and add the new worker nodes. To get the *join command* required to add the new nodes to the cluster, execute the following command on the *Control Plane* node:
 ```bash
 kubeadm token create --print-join-command
 ```
