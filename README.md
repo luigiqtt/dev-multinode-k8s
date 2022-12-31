@@ -56,7 +56,7 @@ This will create a folder named ***dev-multinode-k8s*** containing the following
 
 Another prerequisite is an extracted *qcow2* image of [**Fedora CoreOS**](https://getfedora.org/en/coreos?stream=stable), that can be downloaded from the [Fedora CoreOS official website](https://getfedora.org/en/coreos/download?tab=metal_virtualized&stream=stable&arch=x86_64). Download the QEMU version and uncompress the .xz file. The uncompressed file must be put in the **images** directory that is present in the cloned repository.
 
-**Tip**: before creating a new cluster, download the latest version of Fedora CoreOS. This will speed up the deploy process (when Fedora CoreOS starts up searches for updates and, if some are available, it installs them).
+**Tip**: before creating a new cluster, download the latest version of Fedora CoreOS. In fact, when Fedora CoreOS starts up searches for updates and, if some are available, tries to install them. This could cause problems in the cluster creation process described below.
 
 Configuration
 ---
@@ -146,7 +146,7 @@ To create a new multi-node K8s cluster on your Linux machine the required steps 
 kubeadm token create --print-join-command
 ```
 
-**Note 2**: the files in the repository include a simple example script named ***create.sh*** that executes all the steps described above automatically (except for the Terraform initialization command).
+**Note 2**: the files in the repository include a simple example script named ***create.sh*** that executes all the steps described above automatically (except for the Terraform initialization command). Note that, to work correctly, such scrpit requires that the latest version available of Fedora Core OS is used for the deploy.
 
 Add/remove worker nodes
 ---
@@ -176,7 +176,7 @@ Nodes configuration updates
 ---
 There are two ways to modify the nodes configuration parameters (e.g.: *vcpu* number, *memory*, etc.). The first is using Terraform and the second is using libvirt (using the **Virtual Machine Manager** or the **virsh** command).
 
-The preferred way should be Terraform in order to keep the configuration files and the actual deployed infrastructure aligned and it is quite simple: modify the parameters in the configuration files, then execute the usual *apply* command (terraform apply ...).
+The preferred way should be Terraform in order to keep the configuration files and the actual deployed infrastructure aligned and it is quite simple: modify the parameters in the configuration files, then execute the usual *apply* command (terraform apply).
 
 Unfortunately, for some types of modifications, applying the new configuration with Terraform replaces the old virtual machines with new ones and this is not a good thing in that actually damages your cluster (you need to reinitialize one or more nodes). This is, at least in some cases, probably due to a limitation of the current [Terraform provider for libvirt](https://registry.terraform.io/providers/dmacvicar/libvirt/0.7.0) that may change in future versions.
 
