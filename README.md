@@ -1,9 +1,9 @@
 Multi-node K8s cluster on a single Linux machine with Terraform, libvirt and Fedora CoreOS <!-- omit in toc -->
 ===
 
-Using the files in this repository it is possibile to easily setup a multi-node Kubernetes cluster for development/testing/learning purposes on a single Linux machine.
+Using the files in this repository it is possible to easily setup a multi-node Kubernetes cluster for development/testing/learning purposes on a single Linux machine.
 
-They have been tested on Fedora 37, but should work also on other recent Linux distributions (the only difference is the installation of the required software).
+They have been tested on Fedora 36 and 37, but should work also on other recent Linux distributions (the only difference is the installation of the required software).
 
 - [Requirements](#requirements)
 - [Configuration](#configuration)
@@ -66,7 +66,7 @@ The files in the repository can be directly used updating only the name of the d
 If you want to modify the example configuration you can act on the *Terraform variables* and/or the *Butane files*.
 
 ### Terraform variables
-Most of the configuration parameters are containd in the **k8s.auto.tfvars** and **k8s.secret.auto.tfvars** files. Modify them according to your requirements (see the **variables.tf** file for a dscription of the declared variables).
+Most of the configuration parameters are contained in the **k8s.auto.tfvars** and **k8s.secret.auto.tfvars** files. Modify them according to your requirements (see the **variables.tf** file for a description of the declared variables).
 
 The **k8s.secret.auto.tfvars** contains only the password of the admin user of all the nodes. It is used by Terraform to install the required software on the nodes and **must match** the ***password_hash*** configured in the Butane files of the nodes (see below).
 
@@ -162,7 +162,7 @@ Note that in this way the virtual machines corresponding to the removed nodes wi
 
 ### Add new worker nodes
 
-Modify the **worker_count** parameter in the **k8s.auto.tfvars** file, setting an higher value. If the value is greater than 3, you need to add the required **vms** configurations in the same file (e.g.: worker3, worker4, ecc.) and create the Butane files in the config folder for each worker with index greater than 2. In fact, in the repository there are only 3 Butane files for a maximum of 3 workers. If, for example, you want to create a cluster with 5 worker nodes, you will have to create the files **worker3.bu** and **worker4.bu** (note that the names of the files must have the format **workerN.bu**). Such files can have the same content as the others with only the Hostname changed.
+Modify the **worker_count** parameter in the **k8s.auto.tfvars** file, setting an higher value. If the value is greater than 3, you need to add the required **nodes** configurations in the same file (e.g.: worker3, worker4, etc.) and create the Butane files in the config folder for each worker with index greater than 2. In fact, in the repository there are only 3 Butane files for a maximum of 3 workers. If, for example, you want to create a cluster with 5 worker nodes, you will have to create the files **worker3.bu** and **worker4.bu** (note that the names of the files must have the format **workerN.bu**). Such files can have the same content as the others with only the Hostname changed.
 
 Now you can run the Terraform *apply* command:
 ```bash
@@ -188,7 +188,7 @@ If in the plan the number of destroyed resources is 0, it is safe to proceed and
 
 For example, if you try to change the number of **vcpus** or the **memory** of a node (in the file **k8s.auto.tfvars**) you will see that the virtual machine associated to that node would be replaced, damaging your cluster. Then, for this kind of modifications, use the **Virtual Machine Manager** or the **virsh** command. You will probably need to restart the node, but your cluster will continue to work properly.
 
-Another example is the **automatic startup** of the nodes. With the default configuration in the repository, the nodes of the cluster start automatically when the host machine boots up. If you want to change this behaviour you can modify the **autostart** parameter (in the file **k8s.auto.tfvars**) setting it to false. This update can be safely done with Terraform in that no resource will be destroyed. When the automatic startup of the nodes is disabled you can startup them simply with the usual Terraform *apply* command or using libvirt.
+Another example is the **automatic startup** of the nodes. With the default configuration in the repository, the nodes of the cluster start automatically when the host machine boots up. If you want to change this behaviour you can modify the **autostart** parameter (in the file **k8s.auto.tfvars**) setting it to false. This update can be safely done with Terraform in that no resource will be destroyed. When the automatic startup of the nodes is disabled, you can startup them simply with the usual Terraform *apply* command or using libvirt.
 
 Control the cluster from the host machine
 ---
