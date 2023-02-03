@@ -25,20 +25,20 @@ Requirements
 
 On the host Linux machine the following software must be installed:
 
-* [**libvirt library**](https://libvirt.org/): on Fedora, the installation (mandatory and default packages) can be done using the following command (see: https://docs.fedoraproject.org/en-US/quick-docs/getting-started-with-virtualization/):
+* [**libvirt library**](https://libvirt.org/): on Fedora, the installation (mandatory, default and optional packages) can be done using the following command (see: https://docs.fedoraproject.org/en-US/quick-docs/getting-started-with-virtualization/):
 
     ```bash
-        sudo dnf install @virtualization
+    sudo dnf group install --with-optional virtualization
     ```
 * [**Terraform**](https://www.terraform.io/): on Fedora, the installation can be done using the following command (see: https://developer.hashicorp.com/terraform/downloads?product_intent=terraform):
     ```bash
-        sudo dnf install -y dnf-plugins-core
-        sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
-        sudo dnf -y install terraform
+    sudo dnf install -y dnf-plugins-core
+    sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+    sudo dnf -y install terraform
     ```
 * [**Butane**](https://coreos.github.io/butane/): on Fedora, the installation can be done using the following command:
     ```bash
-        sudo dnf install -y butane
+    sudo dnf install -y butane
     ```
 
 With the above software installed, clone this repository:
@@ -81,7 +81,7 @@ The main parameters in the Butane files that can be safely changed before applyi
 * **password_hash**: hash of the password that can be used to access the cluster nodes via SSH. The content of this field can be computed using the following command (the password must be the one configured in the **k8s.secret.auto.tfvars file**):
 
     ```bash
-        mkpasswd --method=yescrypt
+    mkpasswd --method=yescrypt
     ```
 * **ssh_authorized_keys** (optional): list of the SSH keys that can be used to access the cluster nodes via SSH. These parameter is optional, but it is advisable to set it in order to speed up the access to the nodes of the cluster (see: https://www.ssh.com/academy/ssh/authorized-key);
 * **podSubnet** (only in the **clusterconfig.yml** file definition present in the **control-plane.bu** file): subnet used by pods. Modify it if another set of IP addresses is desired for the pods.
@@ -95,20 +95,20 @@ To create a new multi-node K8s cluster on your Linux machine the required steps 
 
 1. **Initialize Terraform**:
     ```bash
-        cd dev-multinode-k8s
-        terraform init
+    cd dev-multinode-k8s
+    terraform init
     ```
 2. **Modify the configuration** files if needed (see the [previous](#configuration) chapter);
 3. **Apply the configuration** with Terraform:
     ```bash
-        sudo terraform apply
+    sudo terraform apply
     ```
 4. **Wait** some seconds after the end of the apply command execution in order to give the virtual machines the time to restart;
 5. **Initialize the *Control Plane* node**: log in to the *Control Plane* node as the admin user and execute the script **setup/init.sh**:
     ```bash
-        ssh admin@192.168.40.162
-        cd setup
-        ./init.sh
+    ssh admin@192.168.40.162
+    cd setup
+    ./init.sh
     ```
 6. **Copy the *join command*** from the script execution log on the Control Plane node. The following is an example of *join command*:
     ```bash
@@ -117,9 +117,9 @@ To create a new multi-node K8s cluster on your Linux machine the required steps 
     ```
 7. **Initialize the *worker* nodes and add them to the cluster**: log in to each worker node as the admin user and execute the script **setup/init.sh**:
     ```bash
-        ssh admin@192.168.40.xxx
-        cd setup
-        ./init.sh
+    ssh admin@192.168.40.xxx
+    cd setup
+    ./init.sh
     ```
     Then execute with sudo the *join command* copied at the previous step to add the worker to the cluster. For example:
 
