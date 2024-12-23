@@ -153,7 +153,9 @@ kubeadm token create --print-join-command
 
 **Note 2**: the files in the repository include a simple example script named ***create.sh*** that executes all the steps described above automatically (except for the Terraform initialization command). Note that, to work correctly, such scrpit requires that the latest version available of Fedora Core OS is used for the deploy.
 
-**Note 3**: if the created virtual machines do not have Internet access, the issue could be related to the **NAT configuration** on the host. Here’s how you can address this problem:
+**Note 3**: if the DNS doesn't work correctly, try to restart all the nodes of the cluster.
+
+**Note 4**: if the created virtual machines do not have Internet access, the issue could be related to the **NAT configuration** on the host. Here’s how you can address this problem:
 - **Enable IP Forwarding**: check if IP forwarding is enabled:
     ```bash
     sysctl net.ipv4.ip_forward
