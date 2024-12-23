@@ -1,5 +1,5 @@
 variant: fcos
-version: 1.4.0
+version: 1.6.0
 storage:
   files:
     # Hostname
@@ -13,7 +13,7 @@ storage:
       contents:
         inline: |
           PasswordAuthentication yes
-    # YUM repository for kubeadm, kubelet and kubectl
+    # Package repository for kubeadm, kubelet and kubectl (see: https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/change-package-repository/)
     - path: /etc/yum.repos.d/kubernetes.repo
       mode: 0644
       overwrite: true
@@ -21,11 +21,10 @@ storage:
         inline: |
           [kubernetes]
           name=Kubernetes
-          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/
           enabled=1
           gpgcheck=0
-          repo_gpgcheck=0
-          gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
     # Configure automatic loading of required Kernel modules on startup
     - path: /etc/modules-load.d/crio-net.conf
       mode: 0644
@@ -47,17 +46,57 @@ storage:
       mode: 0755
       contents:
         inline: |
-          apiVersion: kubeadm.k8s.io/v1beta3
-          kind: ClusterConfiguration
-          kubernetesVersion: v1.26.0
-          controllerManager:
-            extraArgs: # Specify a R/W directory for FlexVolumes (cluster won't work without this even though we use PVs)
-              flex-volume-plugin-dir: "/etc/kubernetes/kubelet-plugins/volume/exec"
-          networking: # Pod subnet definition
-            podSubnet: 10.244.0.0/16
-          ---
-          apiVersion: kubeadm.k8s.io/v1beta3
+          apiVersion: kubeadm.k8s.io/v1beta4
+          bootstrapTokens:
+          - groups:
+            - system:bootstrappers:kubeadm:default-node-token
+            token: mmw1cg.s73o57tr8p5uuf4g
+            ttl: 24h0m0s
+            usages:
+            - signing
+            - authentication
           kind: InitConfiguration
+          nodeRegistration:
+            criSocket: unix:///var/run/crio/crio.sock
+            imagePullPolicy: IfNotPresent
+            imagePullSerial: true
+            name: k8s-control-plane
+            taints:
+            - effect: NoSchedule
+              key: node-role.kubernetes.io/control-plane
+          timeouts:
+            controlPlaneComponentHealthCheck: 4m0s
+            discovery: 5m0s
+            etcdAPICall: 2m0s
+            kubeletHealthCheck: 4m0s
+            kubernetesAPICall: 1m0s
+            tlsBootstrap: 5m0s
+            upgradeManifests: 5m0s
+          ---
+          apiServer: {}
+          apiVersion: kubeadm.k8s.io/v1beta4
+          caCertificateValidityPeriod: 87600h0m0s
+          certificateValidityPeriod: 8760h0m0s
+          certificatesDir: /etc/kubernetes/pki
+          clusterName: kubernetes
+          controllerManager:
+            extraArgs:
+            - name: flex-volume-plugin-dir
+              value: /etc/kubernetes/kubelet-plugins/volume/exec
+          dns: {}
+          encryptionAlgorithm: RSA-2048
+          etcd:
+            local:
+              dataDir: /var/lib/etcd
+          imageRepository: registry.k8s.io
+          kind: ClusterConfiguration
+          kubernetesVersion: v1.32.0
+          networking:
+            dnsDomain: cluster.local
+            podSubnet: 10.244.0.0/16
+            serviceSubnet: 10.96.0.0/12
+          proxy: {}
+          scheduler: {}
     # Control Plane node initialization script
     - path: /var/home/admin/setup/init.sh
       mode: 0755
@@ -76,7 +115,7 @@ storage:
           sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
           sudo chown $(id -u):$(id -g) $HOME/.kube/config
           
-          # Set up pod networking with kube-router (see: https://www.kube-router.io/)
+          # Set up pod networking with kube-router (see: https://www.kube-router.io/docs/kubeadm/)
           kubectl apply -f https://raw.githubusercontent.com/cloudnativelabs/kube-router/master/daemonset/kubeadm-kuberouter.yaml
 passwd:
   users:

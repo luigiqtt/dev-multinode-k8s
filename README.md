@@ -3,7 +3,7 @@ Multi-node K8s cluster on a single Linux machine with Terraform, libvirt and Fed
 
 Using the files in this repository it is possible to easily setup a multi-node Kubernetes cluster for development/testing/learning purposes on a single Linux machine.
 
-They have been tested on Fedora 36 and 37, but should work also on other recent Linux distributions (the only difference is the installation of the required software).
+They have been tested on Fedora 41, but should work also on other recent Linux distributions (the only difference is the installation of the required software).
 
 - [Requirements](#requirements)
 - [Configuration](#configuration)
@@ -15,7 +15,6 @@ They have been tested on Fedora 36 and 37, but should work also on other recent 
   - [Add new worker nodes](#add-new-worker-nodes)
 - [Nodes configuration updates](#nodes-configuration-updates)
 - [Control the cluster from the host machine](#control-the-cluster-from-the-host-machine)
-- [Deploy an NGINX Ingress Controller](#deploy-an-nginx-ingress-controller)
 - [Deploy and access the Dashboard](#deploy-and-access-the-dashboard)
 - [Destroy the cluster](#destroy-the-cluster)
 - [References](#references)
@@ -34,6 +33,8 @@ On the host Linux machine the following software must be installed:
     ```bash
     sudo dnf install -y dnf-plugins-core
     sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+    # On Fedora 41+:
+    dnf config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo 
     sudo dnf -y install terraform
     ```
 * [**Butane**](https://coreos.github.io/butane/): on Fedora, the installation can be done using the following command:
@@ -103,6 +104,10 @@ To create a new multi-node K8s cluster on your Linux machine the required steps 
     ```bash
     sudo terraform apply
     ```
+    If you want to see what actions Terraform would take to apply the current configuration before applying it, you can do this with the following command:
+    ```bash
+    sudo terraform plan
+    ```
 4. **Wait** some seconds after the end of the apply command execution in order to give the virtual machines the time to restart;
 5. **Initialize the *Control Plane* node**: log in to the *Control Plane* node as the admin user and execute the script **setup/init.sh**:
     ```bash
@@ -132,9 +137,9 @@ To create a new multi-node K8s cluster on your Linux machine the required steps 
     kubectl get nodes
 
     NAME                STATUS   ROLES           AGE     VERSION
-    k8s-control-plane   Ready    control-plane   2m23s   v1.26.0
-    k8s-worker0         Ready    <none>          112s    v1.26.0
-    k8s-worker1         Ready    <none>          81s     v1.26.0
+    k8s-control-plane   Ready    control-plane   2m23s   v1.32.0
+    k8s-worker0         Ready    <none>          112s    v1.32.0
+    k8s-worker1         Ready    <none>          81s     v1.32.0
 
     (or
         kubectl get nodes -o wide
@@ -147,6 +152,48 @@ kubeadm token create --print-join-command
 ```
 
 **Note 2**: the files in the repository include a simple example script named ***create.sh*** that executes all the steps described above automatically (except for the Terraform initialization command). Note that, to work correctly, such scrpit requires that the latest version available of Fedora Core OS is used for the deploy.
+
+**Note 3**: if the created virtual machines do not have Internet access, the issue could be related to the **NAT configuration** on the host. Here’s how you can address this problem:
+- **Enable IP Forwarding**: check if IP forwarding is enabled:
+    ```bash
+    sysctl net.ipv4.ip_forward
+    ```
+    If it returns `0`, enable it temporarily:
+    ```bash
+    sysctl -w net.ipv4.ip_forward=1
+    ```
+    To make it permanent, edit `/etc/sysctl.conf` and add:
+    ```
+    net.ipv4.ip_forward = 1
+    ```
+    Then apply the changes:
+    ```bash
+    sudo sysctl -p
+    ```
+- **Add NAT rules**:
+    
+    Allow **forwarding** in the **libvirt** zone:
+    ```bash
+    sudo firewall-cmd --zone=libvirt --add-forward --permanent
+    ```
+    Allow traffic from the custom **k8snet** network (defined in the **k8s.auto.tfvars** file) to be forwarded through the zone:
+    ```bash
+    sudo firewall-cmd --zone=libvirt --add-source=192.168.40.160/27 --permanent
+    ```
+    Ensure that NAT (masquerading) is enabled on the outgoing traffic to the Internet:
+    ```bash
+    sudo firewall-cmd --add-masquerade --permanent
+    ```
+    Reload firewalld to apply the settings:
+    ```bash
+    sudo firewall-cmd --reload
+    ```
+    To ensure everything is correctly configured, you can check the status of your zones and rules:
+    ```bash
+    sudo firewall-cmd --zone=libvirt --list-all
+    sudo firewall-cmd --list-all
+    ```
+    Ensure that **forwarding** is enabled for the **libvirt** zone and that **masquerading** is applied to the **default** zone.
 
 Add/remove worker nodes
 ---
@@ -178,7 +225,7 @@ There are two ways to modify the nodes configuration parameters (e.g.: *vcpu* nu
 
 The preferred way should be Terraform in order to keep the configuration files and the actual deployed infrastructure aligned and it is quite simple: modify the parameters in the configuration files, then execute the usual *apply* command (terraform apply).
 
-Unfortunately, for some types of modifications, applying the new configuration with Terraform replaces the old virtual machines with new ones and this is not a good thing in that actually damages your cluster (you need to reinitialize one or more nodes). This is, at least in some cases, probably due to a limitation of the current [Terraform provider for libvirt](https://registry.terraform.io/providers/dmacvicar/libvirt/0.7.0) that may change in future versions.
+Unfortunately, for some types of modifications, applying the new configuration with Terraform replaces the old virtual machines with new ones and this is not a good thing in that actually damages your cluster (you need to reinitialize one or more nodes). This is, at least in some cases, probably due to a limitation of the current [Terraform provider for libvirt](https://registry.terraform.io/providers/dmacvicar/libvirt/latest) that may change in future versions.
 
 That said, the advice is to try Terraform first checking the planned modifications with the command:
 ```bash
@@ -193,19 +240,6 @@ Another example is the **automatic startup** of the nodes. With the default conf
 Control the cluster from the host machine
 ---
 If you want to control the cluster from the host machine, you should install the command-line tool **kubectl** and then copy the **.kube/config** file of the *Control Plane* node in the **.kube** directory (create it if not already present) in your home directory. The installation of the **kubectl** tool can be easily done [using **snap**](https://snapcraft.io/kubectl).
-
-Deploy an NGINX Ingress Controller
----
-
-To deploy an [**NGINX Ingress Controller**](https://github.com/kubernetes/ingress-nginx) use the following command (see: https://kubernetes.github.io/ingress-nginx/deploy/):
-```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.5.1/deploy/static/provider/cloud/deploy.yaml
-```
-The status of the controller can be checked with the following command:
-```bash
-kubectl describe -n ingress-nginx deploy/ingress-nginx-controller
-```
-Of course, other *Ingress Controllers* can be installed as needed.
 
 Deploy and access the Dashboard
 ---

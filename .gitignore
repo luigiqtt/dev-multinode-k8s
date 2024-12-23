@@ -1,0 +1,3 @@
+*.ign
+images/**/*.xz
+images/**/*.qcow2

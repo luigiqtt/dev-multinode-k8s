@@ -1,6 +1,6 @@
 workers_count    = 2
 admin_user       = "admin"
-image_path       = "./images/fedora-coreos-37.20221127.3.0-qemu.x86_64.qcow2"
+image_path       = "./images/fedora-coreos-41.20241122.3.0-qemu.x86_64.qcow2"
 k8s_network_name = "k8snet"
 k8s_subnet       = "192.168.40.160/27"
 autostart        = true

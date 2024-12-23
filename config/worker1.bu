@@ -1,5 +1,5 @@
 variant: fcos
-version: 1.4.0
+version: 1.6.0
 storage:
   files:
     # Hostname
@@ -21,11 +21,10 @@ storage:
         inline: |
           [kubernetes]
           name=Kubernetes
-          baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+          baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/
           enabled=1
           gpgcheck=0
-          repo_gpgcheck=0
-          gpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+          gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
     # Configure automatic loading of required Kernel modules on startup
     - path: /etc/modules-load.d/crio-net.conf
       mode: 0644
